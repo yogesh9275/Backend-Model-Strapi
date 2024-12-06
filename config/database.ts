@@ -1,26 +1,27 @@
 import path from 'path';
 
 export default ({ env }) => {
-  const client = env('DATABASE_CLIENT', 'sqlite');
-
+  const client = env('DATABASE_CLIENT', 'mysql'); // Defaulting to mysql as per your use case
   const connections = {
     mysql: {
       connection: {
-        host: env('DATABASE_HOST', 'localhost'),
-        port: env.int('DATABASE_PORT', 3306),
-        database: env('DATABASE_NAME', 'strapi'),
-        user: env('DATABASE_USERNAME', 'strapi'),
-        password: env('DATABASE_PASSWORD', 'strapi'),
-        ssl: env.bool('DATABASE_SSL', false) && {
-          key: env('DATABASE_SSL_KEY', undefined),
-          cert: env('DATABASE_SSL_CERT', undefined),
-          ca: env('DATABASE_SSL_CA', undefined),
-          capath: env('DATABASE_SSL_CAPATH', undefined),
-          cipher: env('DATABASE_SSL_CIPHER', undefined),
-          rejectUnauthorized: env.bool('DATABASE_SSL_REJECT_UNAUTHORIZED', true),
+        host: env('DATABASE_HOST'), // Set your MySQL host
+        port: env.int('DATABASE_PORT'), // Default MySQL port
+        database: env('DATABASE_NAME'), // Set your MySQL database name
+        user: env('DATABASE_USERNAME'), // Set your MySQL username
+        password: env('DATABASE_PASSWORD'), // Set your MySQL password
+        ssl: env.bool('DATABASE_SSL'), // Disable SSL if not needed
+      },
+      pool: {
+        min: env.int('DATABASE_POOL_MIN', 2),
+        max: env.int('DATABASE_POOL_MAX', 10),
+        afterCreate: (conn, done) => {
+          // Explicitly enable autocommit to prevent transaction issues with DDL (Data Definition Language)
+          conn.query('SET autocommit = 1;', (err) => {
+            done(err, conn);
+          });
         },
       },
-      pool: { min: env.int('DATABASE_POOL_MIN', 2), max: env.int('DATABASE_POOL_MAX', 10) },
     },
     postgres: {
       connection: {
